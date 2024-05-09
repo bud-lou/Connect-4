@@ -108,6 +108,9 @@ public class Row {
             } else if (col == 'O') {   //increment o's and reset x's
                 numOs++;
                 numXs = 0;
+            } else {                   //reset both to 0
+                numXs = 0;
+                numOs = 0;
             }
             //Check if either has reached four in a row
             if (numOs == Board.NUM_CONSECUTIVE) {

@@ -254,9 +254,11 @@ public class Board {
                 //Check if four in a row has been achieved
                 if (numOs == NUM_CONSECUTIVE) {
                     scores[Players.ONE.getPlayerIndex()]++;
+                    System.out.println("vertical");
                     return true;
                 } else if (numXs == NUM_CONSECUTIVE) {
                     scores[Players.TWO.getPlayerIndex()]++;
+                    System.out.println("vertical");
                     return true;
                 }
             }
@@ -266,54 +268,132 @@ public class Board {
             int winnersIndex = row.checkHorizontalWin();
             if (winnersIndex != -1) {
                 scores[winnersIndex]++;
+                System.out.println("horizontal");
                 return true;
             }
         }
         //Check for diagonal
-        if (checkDiagonal(leftToRight) || checkDiagonal(rightToLeft)) {
-            //scores updated inside checkDiagonal method
+        // if (checkDiagonal(leftToRight) || checkDiagonal(rightToLeft)) {
+        //     //scores updated inside checkDiagonal method
+        //     return true;
+        // }
+        /*
+        //shifts the diagonal to the side by a column each time
+        for (int colShift = 0; colShift <= NUM_COLS - NUM_CONSECUTIVE; colShift++) {
+            //shifts the diagonal down a row each time
+            for (int i = 0; i <= NUM_ROWS - NUM_CONSECUTIVE; i++) {
+                //System.out.println("---------------------");
+                int numXs = 0;
+                int col = 0 + colShift;
+                //checks through the diagonal
+                for (int row = i; row < i + NUM_CONSECUTIVE; row++) {
+                    //System.out.println(row + ":" + col + "  " + rows[row].columnContents(col));
+                    if (rows[row].columnContents(col) == 'X') {
+                        numXs ++;
+                    } else {
+                        numXs = 0;
+                    }
+                    if (numXs == NUM_CONSECUTIVE) {
+                        scores[1]++;
+                        System.out.println("diagonal");
+                        return true;
+                    }
+                    //System.out.println(numXs);
+                    col++;
+                }
+            }
+        }
+        */
+
+        // //shifts the diagonal to the side by a column each time
+        // int thing1 = -1 * (NUM_COLS - 1);
+        // // System.out.println(Math.abs(thing1));
+        // // System.out.println(-1 * (NUM_CONSECUTIVE - 1));
+        // for (int colShift = thing1; colShift <= -1 * (NUM_CONSECUTIVE - 1); colShift++) {
+        //     //shifts the diagonal down a row each time
+        //     for (int i = 0; i <= NUM_ROWS - NUM_CONSECUTIVE; i++) {
+        //         System.out.println("---------------------");
+        //         // System.out.println(colShift);
+        //         // System.out.println(i);
+        //         int numXs = 0;
+        //         int col = 0 + Math.abs(colShift);
+        //         //checks through the diagonal
+        //         for (int row = i; row < i + NUM_CONSECUTIVE; row++) {
+        //             // System.out.println(colShift);
+        //             System.out.println(row + ":" + col + "  " + rows[row].columnContents(col));
+        //             if (rows[row].columnContents(col) == 'X') {
+        //                 numXs ++;
+        //             } else {
+        //                 numXs = 0;
+        //             }
+        //             if (numXs == NUM_CONSECUTIVE) {
+        //                 scores[1]++;
+        //                 System.out.println("diagonal");
+        //                 return true;
+        //             }
+        //             //System.out.println(numXs);
+        //             col--;
+        //         }
+        //     }
+        // }
+
+        if (checkDiagonal("leftToRight") || checkDiagonal("rightToLeft")) {
             return true;
         }
+
         //No consecutive tokens
         return false;
     }
 
     /**
+     * Checks for a consecutive diagonal of token's on the board
      * 
-     * 
-     * @param direction
-     * @return
+     * @param direction of diagonal consecutive pattern we're looking for (/ vs \)
+     * @return whether or not there is a diagonal win
      */
     public static boolean checkDiagonal(String direction) {
-        //Check for diagonal
-        /**
-         * 00
-         * 11
-         * 22
-         * 33
-         * 
-         * 10
-         * 21
-         * 32
-         * 43
-         * 
-         * ... 
-         * 
-         * 30
-         * 41
-         * 52
-         * 63
-         * 
-         * downwards :: rows (0-3) -> cols (0-3(0-3)) -> rows (0-3)
-         * 
-         * 
-         */
-        for (int row = 0; row < NUM_CONSECUTIVE; row++) {
-            int numOs = 0;
-            int numXs = 0;
-
+        //Initialize vars
+        int firstShift = -1;
+        int colShiftBarrier = -1;
+        // Assign values based on direction
+        switch (direction) {
+            case "leftToRight":
+                firstShift = 0;
+                colShiftBarrier = NUM_COLS - NUM_CONSECUTIVE;
+                break;
+            case "rightToLeft":
+                firstShift = -1 * (NUM_COLS - 1);
+                colShiftBarrier = -1 * (NUM_CONSECUTIVE - 1);
         }
-        //No diagonal
+        //shifts the diagonal to the side by a column each time
+        for (int colShift = firstShift; colShift <= colShiftBarrier; colShift++) {
+            //shifts the diagonal down a row each time
+            for (int rowShift = 0; rowShift <= NUM_ROWS - NUM_CONSECUTIVE; rowShift++) {
+                //System.out.println("---------------------");
+                int numXs = 0;
+                int col = 0 + Math.abs(colShift);
+                //checks through the diagonal
+                for (int row = rowShift; row < rowShift + NUM_CONSECUTIVE; row++) {
+                    //System.out.println(row + ":" + col + "  " + rows[row].columnContents(col));
+                    if (rows[row].columnContents(col) == 'X') {
+                        numXs ++;
+                    } else {
+                        numXs = 0;
+                    }
+                    if (numXs == NUM_CONSECUTIVE) {
+                        scores[1]++;
+                        System.out.println("diagonal");
+                        return true;
+                    }
+                    //System.out.println(numXs);
+                    if (direction.equals("leftToRight")) {
+                        col++;
+                    } else {
+                        col--;
+                    }
+                }
+            }
+        }
         return false;
     }
 }
