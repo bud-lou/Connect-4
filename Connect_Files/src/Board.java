@@ -1,5 +1,5 @@
-import java.util.Arrays;
 import java.util.Scanner;
+import java.util.Arrays;
 
 public class Board {
     /** Player 1's Color */
@@ -22,6 +22,15 @@ public class Board {
 
     /** Array of Each Player's Color */
     public static String[] colors = {yellow, blue};
+
+    /** Array of Each Player's Token Symbol - won't appear like this in the console */
+    public static char[] tokens = {'O', 'X'};
+
+    /** Number of Consecutive Tokens Player 1 Has At the Moment */
+    public static int numConsecTokensP1 = 0;
+    
+    /** Number of Consecutive Tokens Player 2 Has At the Moment */
+    public static int numConsecTokensP2 = 0;
 
     /** Current Player's Turn - Starts on player 1 */
     public enum Players {
@@ -177,7 +186,7 @@ public class Board {
         String playerColor = colors[currentPlayer.getPlayerIndex()];
         //Prompt player for column choice
         System.out.print("\n" + playerColor + playerName + "'s" + white + " Turn. Enter column: ");
-        while (!scan.hasNextInt() || !validate(scan.next())) {
+        while (!scan.hasNextInt() || !validateCol(scan.next())) {
             //System.out.println("x");
             System.out.print("Invalid column. Try again: ");
             //Get rid of current input if necessary
@@ -204,14 +213,7 @@ public class Board {
             rows[rowToAddTo].addToken(indexOfColumnToAddTo, currentPlayer.getPlayerIndex());
         }
         //Set up to be next player's turn
-        switch (currentPlayer) {
-            case ONE: 
-                currentPlayer = Players.TWO;
-                break;
-            default:
-                currentPlayer = Players.ONE;
-        }
-
+        currentPlayer = currentPlayer == Players.TWO ? Players.ONE : Players.TWO;
     }
 
     /**
@@ -220,7 +222,7 @@ public class Board {
      * 
      * @return whether or not the column is valid
      */
-    public static boolean validate(String columnNum) {
+    public static boolean validateCol(String columnNum) {
         //Number is between 1 and 7
         for (int i = 1; i <= NUM_COLS; i++) {
             String num = "" + i;
@@ -241,24 +243,12 @@ public class Board {
     public static boolean fourConsecutive() {
         //Check for four vertical
         for (int col = 0; col < NUM_COLS; col++) {
-            int numXs = 0;
-            int numOs = 0;
+            //Reset number of consecutive tokens
+            numConsecTokensP1 = 0;
+            numConsecTokensP2 = 0;
             for (Row row: rows) {
-                if (row.columnContents(col) == 'X') {  //increment x's and reset o's
-                    numXs++;
-                    numOs = 0;
-                } else if (row.columnContents(col) == 'O') {  //increment o's and reset x's
-                    numOs++;
-                    numXs = 0;
-                }
-                //Check if four in a row has been achieved
-                if (numOs == NUM_CONSECUTIVE) {
-                    scores[Players.ONE.getPlayerIndex()]++;
-                    System.out.println("vertical");
-                    return true;
-                } else if (numXs == NUM_CONSECUTIVE) {
-                    scores[Players.TWO.getPlayerIndex()]++;
-                    System.out.println("vertical");
+                // Check if vertical win achieved
+                if (checkNumConsecReached(row, col)) {
                     return true;
                 }
             }
@@ -273,80 +263,17 @@ public class Board {
             }
         }
         //Check for diagonal
-        // if (checkDiagonal(leftToRight) || checkDiagonal(rightToLeft)) {
-        //     //scores updated inside checkDiagonal method
-        //     return true;
-        // }
-        /*
-        //shifts the diagonal to the side by a column each time
-        for (int colShift = 0; colShift <= NUM_COLS - NUM_CONSECUTIVE; colShift++) {
-            //shifts the diagonal down a row each time
-            for (int i = 0; i <= NUM_ROWS - NUM_CONSECUTIVE; i++) {
-                //System.out.println("---------------------");
-                int numXs = 0;
-                int col = 0 + colShift;
-                //checks through the diagonal
-                for (int row = i; row < i + NUM_CONSECUTIVE; row++) {
-                    //System.out.println(row + ":" + col + "  " + rows[row].columnContents(col));
-                    if (rows[row].columnContents(col) == 'X') {
-                        numXs ++;
-                    } else {
-                        numXs = 0;
-                    }
-                    if (numXs == NUM_CONSECUTIVE) {
-                        scores[1]++;
-                        System.out.println("diagonal");
-                        return true;
-                    }
-                    //System.out.println(numXs);
-                    col++;
-                }
-            }
-        }
-        */
-
-        // //shifts the diagonal to the side by a column each time
-        // int thing1 = -1 * (NUM_COLS - 1);
-        // // System.out.println(Math.abs(thing1));
-        // // System.out.println(-1 * (NUM_CONSECUTIVE - 1));
-        // for (int colShift = thing1; colShift <= -1 * (NUM_CONSECUTIVE - 1); colShift++) {
-        //     //shifts the diagonal down a row each time
-        //     for (int i = 0; i <= NUM_ROWS - NUM_CONSECUTIVE; i++) {
-        //         System.out.println("---------------------");
-        //         // System.out.println(colShift);
-        //         // System.out.println(i);
-        //         int numXs = 0;
-        //         int col = 0 + Math.abs(colShift);
-        //         //checks through the diagonal
-        //         for (int row = i; row < i + NUM_CONSECUTIVE; row++) {
-        //             // System.out.println(colShift);
-        //             System.out.println(row + ":" + col + "  " + rows[row].columnContents(col));
-        //             if (rows[row].columnContents(col) == 'X') {
-        //                 numXs ++;
-        //             } else {
-        //                 numXs = 0;
-        //             }
-        //             if (numXs == NUM_CONSECUTIVE) {
-        //                 scores[1]++;
-        //                 System.out.println("diagonal");
-        //                 return true;
-        //             }
-        //             //System.out.println(numXs);
-        //             col--;
-        //         }
-        //     }
-        // }
-
         if (checkDiagonal("leftToRight") || checkDiagonal("rightToLeft")) {
+            //Score incremented in checkDiagonal
             return true;
         }
-
         //No consecutive tokens
         return false;
     }
 
     /**
-     * Checks for a consecutive diagonal of token's on the board
+     * Checks for a consecutive diagonal of token's on the board and increments
+     * the score of the winning player
      * 
      * @param direction of diagonal consecutive pattern we're looking for (/ vs \)
      * @return whether or not there is a diagonal win
@@ -369,23 +296,16 @@ public class Board {
         for (int colShift = firstShift; colShift <= colShiftBarrier; colShift++) {
             //shifts the diagonal down a row each time
             for (int rowShift = 0; rowShift <= NUM_ROWS - NUM_CONSECUTIVE; rowShift++) {
-                //System.out.println("---------------------");
-                int numXs = 0;
+                numConsecTokensP1 = 0;
+                numConsecTokensP2 = 0;
                 int col = 0 + Math.abs(colShift);
                 //checks through the diagonal
                 for (int row = rowShift; row < rowShift + NUM_CONSECUTIVE; row++) {
-                    //System.out.println(row + ":" + col + "  " + rows[row].columnContents(col));
-                    if (rows[row].columnContents(col) == 'X') {
-                        numXs ++;
-                    } else {
-                        numXs = 0;
-                    }
-                    if (numXs == NUM_CONSECUTIVE) {
-                        scores[1]++;
-                        System.out.println("diagonal");
+                    //Check for diagonal
+                    if (checkNumConsecReached(rows[row], col)) {
                         return true;
                     }
-                    //System.out.println(numXs);
+                    // Update column
                     if (direction.equals("leftToRight")) {
                         col++;
                     } else {
@@ -394,6 +314,35 @@ public class Board {
                 }
             }
         }
+        //No diagonal found
+        return false;
+    }
+
+    /**
+     * 
+     * @param row
+     * @param col
+     * @return
+     */
+    public static boolean checkNumConsecReached(Row row, int col) {
+        if (row.columnContents(col) == tokens[Players.ONE.getPlayerIndex()]) {  //increment player 1's token and reset 2's
+            numConsecTokensP1++;
+            numConsecTokensP2 = 0;
+        } else if (row.columnContents(col) == tokens[Players.TWO.getPlayerIndex()]) {  //increment player 2's token and reset 1's
+            numConsecTokensP2++;
+            numConsecTokensP1 = 0;
+        }
+
+        //Figure out if anyone won
+        if (numConsecTokensP1 == NUM_CONSECUTIVE || numConsecTokensP2 == NUM_CONSECUTIVE) {
+            //Figure out who won
+            Players winner = numConsecTokensP1 == NUM_CONSECUTIVE ? Players.ONE : Players.TWO;
+            //Increment score
+            scores[winner.getPlayerIndex()]++;
+            System.out.println("vertical");
+            return true;
+        }
+        //No consecutive line yet
         return false;
     }
 }

@@ -1,4 +1,5 @@
 import java.util.Scanner;
+
 import java.util.Arrays;
 
 public class Row {
@@ -31,22 +32,19 @@ public class Row {
         Scanner stringSearch = new Scanner(rowNoCommas);
         while (stringSearch.hasNext()) {
             String nextChar = stringSearch.next();
-            if (nextChar.indexOf("O") != -1) {  //write in blue
+            int indexOfPlayer1Token = nextChar.indexOf(Board.tokens[Board.Players.ONE.getPlayerIndex()]);
+            int indexOfPlayer2Token = nextChar.indexOf(Board.tokens[Board.Players.TWO.getPlayerIndex()]);
+            // Figure out if there's a token or empty space
+            if (indexOfPlayer1Token != -1 || indexOfPlayer2Token != -1) {
+                //Determine who's token it is
+                Board.Players tokenOwner = indexOfPlayer2Token == -1 ? Board.Players.ONE : Board.Players.TWO;
                 //Add left border if necessary
                 if (nextChar.charAt(0) == '|') {
                     rowFinalized += "|";
                     nextChar = nextChar.substring(1);
                 }
-                rowFinalized += Board.colors[Board.Players.ONE.getPlayerIndex()] + "O" + 
+                rowFinalized += Board.colors[tokenOwner.getPlayerIndex()] + "O" + 
                                 Board.white + nextChar.substring(1);
-            } else if (nextChar.indexOf("X") != -1) {  //write in gold
-                //Add left border if necessary
-                if (nextChar.charAt(0) == '|') {
-                    rowFinalized += "|";
-                    nextChar = nextChar.substring(1);
-                }
-                rowFinalized += Board.colors[Board.Players.TWO.getPlayerIndex()] + "O" + 
-                                Board.white  + nextChar.substring(1);
             } else {  //write in white
                 rowFinalized += nextChar;
             }
@@ -66,12 +64,7 @@ public class Row {
      */
     public void addToken(int colNum, int playerIndex) {
         //Place token
-        if (playerIndex == 0) {  //Player 1's token
-            columns[colNum] = 'O';
-        } else {    //Player 2's token
-            columns[colNum] = 'X';
-        }
-        
+        columns[colNum] = Board.tokens[playerIndex];
     }
 
     /**
@@ -102,12 +95,12 @@ public class Row {
         int numXs = 0;
         int numOs = 0;
         for (char col : columns) {
-            if (col == 'X') {          //increment x's and reset o's
-                numXs++;
-                numOs = 0;
-            } else if (col == 'O') {   //increment o's and reset x's
+            if (col == Board.tokens[Board.Players.ONE.getPlayerIndex()]) {          //increment x's and reset o's
                 numOs++;
                 numXs = 0;
+            } else if (col == Board.tokens[Board.Players.TWO.getPlayerIndex()]) {   //increment o's and reset x's
+                numXs++;
+                numOs = 0;
             } else {                   //reset both to 0
                 numXs = 0;
                 numOs = 0;
