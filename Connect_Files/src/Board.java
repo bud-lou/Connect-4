@@ -1,15 +1,14 @@
 import java.util.Scanner;
-import java.util.Arrays;
 
 public class Board {
     /** Player 1's Color */
-    public static final String yellow = "\u001B[34m";
+    public static final String RED = "\u001B[31m";
     
     /** Player 2's Color */
-    public static final String blue = "\u001B[33m";
+    public static final String BLUE = "\u001B[34m";
 
     /** Reset Color */
-    public static final String white = "\u001B[37m";
+    public static final String WHITE = "\u001B[37m";
     
     /** Number of Columns in Board */
     public static final int NUM_COLS = 7;
@@ -20,8 +19,11 @@ public class Board {
     /** Number of Consecutive Tokens Needed To Win */
     public static final int NUM_CONSECUTIVE = 4;
 
+    /** Default Number Indicating That An Entire Row is Full */
+    public static final int NO_ROWS_AVAILABLE = 13;
+
     /** Array of Each Player's Color */
-    public static String[] colors = {yellow, blue};
+    public static String[] colors = {RED, BLUE};
 
     /** Array of Each Player's Token Symbol - won't appear like this in the console */
     public static char[] tokens = {'O', 'X'};
@@ -59,6 +61,12 @@ public class Board {
     }
     public static Players currentPlayer = Players.ONE;
 
+    /** Keeps Track of Whether or Not Players Want to Exit Game */
+    private static boolean playerWantsToExit = false;
+
+    /** Key Player Enters to Exit the Game */
+    private static char exitKey = 'q';
+
     /** Array of All Row Objects */
     private static Row[] rows;
 
@@ -84,14 +92,21 @@ public class Board {
      */
     public static void main(String[] args) {
         Scanner scan = new Scanner(System.in);
-        askNumPlayers(scan);
-        initializeBoard();
-        while (!fourConsecutive()) {
-            newTurn(scan);
+        //Look to keep game going until they exit
+        while (!playerWantsToExit) {
+            askNumPlayers(scan);
+            initializeBoard();
+            while (!fourConsecutive() && !tie()) {
+                newTurn(scan);
+            }
+            //Print winning board
+            printBoard();
+            if (tie()) {
+                System.out.println("\nTie :/");
+            } else {
+                System.out.println("\nGame won :3");
+            }
         }
-        //Print winning board
-        printBoard();
-        System.out.println("\nGame won :3");
 
         //Close scanner
         scan.close();
@@ -158,10 +173,10 @@ public class Board {
             //Print side stats
             if (i == 0) {
                 System.out.print("\t\t" + colors[Players.ONE.getPlayerIndex()] + name1 + 
-                                 "'s" + white + " Score: " + scores[Players.ONE.getPlayerIndex()]);
+                                 "'s" + WHITE + " Score: " + scores[Players.ONE.getPlayerIndex()]);
             } else if (i == 2) {
                 System.out.print("\t\t" + colors[Players.TWO.getPlayerIndex()] + name2 + 
-                                 "'s" + white + " Score: " + scores[Players.TWO.getPlayerIndex()]);
+                                 "'s" + WHITE + " Score: " + scores[Players.TWO.getPlayerIndex()]);
             } 
             System.out.println();
         }
@@ -185,33 +200,34 @@ public class Board {
         String playerName = names[currentPlayer.getPlayerIndex()];
         String playerColor = colors[currentPlayer.getPlayerIndex()];
         //Prompt player for column choice
-        System.out.print("\n" + playerColor + playerName + "'s" + white + " Turn. Enter column: ");
-        while (!scan.hasNextInt() || !validateCol(scan.next())) {
-            //System.out.println("x");
-            System.out.print("Invalid column. Try again: ");
-            //Get rid of current input if necessary
-            if (!scan.hasNextInt()) {
-                scan.next();
+        System.out.print("\n" + playerColor + playerName + "'s" + WHITE + " Turn. Enter column: ");
+        //Validate input
+        int rowToAddTo = INVALID_ROW;    
+        int timesLoopHasRun = 0;
+        while (rowToAddTo == INVALID_ROW) {     //make sure column isn't full
+            if (timesLoopHasRun > 0) {
+                System.out.print("Column is full. Try again: ");
             }
-        }
-        //rows[columnToAddTo - 1].addToken(columnToAddTo);
-        int rowToAddTo = INVALID_ROW;
-        //Traverse through rows to see which row token should go in
-        for (int i = NUM_ROWS - 1; i >= 0; i--) {
-            if (rows[i].isColumnEmpty(indexOfColumnToAddTo)) {
-                //figure out index of empty row
-                rowToAddTo = i;
-                //stop looking through rows
-                break;
+            while (!scan.hasNextInt() || !validateCol(scan.next())) {     //make sure column is within acceptable range
+                System.out.print("Invalid column. Try again: ");
+                //Get rid of current input if necessary
+                if (!scan.hasNextInt()) {
+                    scan.next();
+                }
             }
+            //Traverse through rows to see which row token should go in
+            for (int i = NUM_ROWS - 1; i >= 0; i--) {
+                if (rows[i].isColumnEmpty(indexOfColumnToAddTo)) {
+                    //figure out index of empty row
+                    rowToAddTo = i;
+                    //stop looking through rows
+                    break;
+                }
+            }
+            timesLoopHasRun++;
         }
-        //Report back to user if column is full
-        if (rowToAddTo == INVALID_ROW) {
-            System.out.println("Column is full :(");
-        } else {
-            //Add token to column
-            rows[rowToAddTo].addToken(indexOfColumnToAddTo, currentPlayer.getPlayerIndex());
-        }
+        //Add token to column
+        rows[rowToAddTo].addToken(indexOfColumnToAddTo, currentPlayer.getPlayerIndex());
         //Set up to be next player's turn
         currentPlayer = currentPlayer == Players.TWO ? Players.ONE : Players.TWO;
     }
@@ -344,5 +360,21 @@ public class Board {
         }
         //No consecutive line yet
         return false;
+    }
+
+    /**
+     * Checks whether or not the board is full 
+     * 
+     * @return whether or not there is a tie
+     */
+    public static boolean tie() {
+        //Traverses through each row
+        for (Row row : rows) {
+            //Checks if row is full
+            if (row.getFirstRowAvailable() != NO_ROWS_AVAILABLE) {
+                return false;  //row not full
+            }
+        }
+        return true; 
     }
 }

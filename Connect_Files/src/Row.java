@@ -44,7 +44,7 @@ public class Row {
                     nextChar = nextChar.substring(1);
                 }
                 rowFinalized += Board.colors[tokenOwner.getPlayerIndex()] + "O" + 
-                                Board.white + nextChar.substring(1);
+                                Board.WHITE + nextChar.substring(1);
             } else {  //write in white
                 rowFinalized += nextChar;
             }
@@ -73,13 +73,12 @@ public class Row {
      * @returns whether or not there is space available
      */
     public int getFirstRowAvailable() {
-        final int NO_ROWS_AVAILABLE = 13;
         for (char col : columns) {
             if (col == '*') {
                 return col;
             }
         }
-        return NO_ROWS_AVAILABLE;
+        return Board.NO_ROWS_AVAILABLE;
     }
 
     public boolean isColumnEmpty(int colNum) {
